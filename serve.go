@@ -107,15 +107,8 @@ func memoryHandler(w http.ResponseWriter, r *http.Request) {
 		if mimeType == "" {
 			mimeType = "application/octet-stream"
 		}
-		var src map[string]struct {
-			Content     []byte
-			ContentType string
-		}
-		if mimeType == "image/png" {
-			src = getIcon(sc)
-		} else {
-			src = getDapp(sc)
-		}
+
+		src := getDapp(sc)
 		file, ok = src[endroute]
 		if !ok {
 			panic("no files here")

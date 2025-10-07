@@ -64,27 +64,6 @@ func getDapp(sc rpc.GetSC_Result) (files map[string]struct {
 	}))
 	return
 }
-func getIcon(sc rpc.GetSC_Result) (files map[string]struct {
-	Content     []byte
-	ContentType string
-}) {
-	// fmt.Println("Smart Contract Code:")
-	// fmt.Println(sc.Code)
-
-	var contract index
-	fmt.Println("dAPP Index")
-	// fmt.Println(sc.VariableStringKeys)
-
-	contract.Files = getFiles(sc.VariableStringKeys)
-
-	chunks := getChunks(sc.VariableUint64Keys)
-	// fmt.Println(chunks)
-	files = decompressIcon(contract, chunks, make(map[string]struct {
-		Content     []byte
-		ContentType string
-	}))
-	return
-}
 func getData(index map[string]any, scid string) string {
 
 	decoded := decodeKeys(index)

@@ -16,7 +16,7 @@ import (
 func unescapeLines(b []byte) string {
 	var unescaped string
 	if err := json.Unmarshal(b, &unescaped); err != nil {
-		panic(err)
+		return err.Error()
 	}
 	return unescaped
 }
@@ -91,45 +91,7 @@ func decompressData(b []byte) *gzip.Reader {
 	defer gz.Close()
 	return gz
 }
-func decompressIcon(contract index, chunks []chunkedCode, files map[string]struct {
-	Content     []byte
-	ContentType string
-}) map[string]struct {
-	Content     []byte
-	ContentType string
-} {
-	start := uint64(0)
-	for i, file := range contract.Files {
-		end := file.EOF
-		name := file.Name
-		// fmt.Println(chunks)
-		switch i {
-		default:
-			b := decodeChunks(chunks[start:end])
-			start = end
-			// fmt.Println(string(b))
-			unzipped := unzipLines(b)
-			// unescaped := unescapeLines(unzipped)
 
-			// fmt.Println(unzipped)
-			mimeType := mime.TypeByExtension(filepath.Ext(file.Name))
-			if mimeType == "" {
-				mimeType = "application/octet-stream"
-			}
-			file.Lines = strings.Split(string(unzipped), "\n")
-			files[name] = struct {
-				Content     []byte
-				ContentType string
-			}{
-				Content:     unzipped,
-				ContentType: mimeType,
-			}
-			fmt.Println(string(files[name].ContentType))
-		}
-
-	}
-	return files
-}
 func decompressFiles(contract index, chunks []chunkedCode, files map[string]struct {
 	Content     []byte
 	ContentType string
@@ -149,8 +111,10 @@ func decompressFiles(contract index, chunks []chunkedCode, files map[string]stru
 			// fmt.Println(string(b))
 			unzipped := unzipLines(b)
 			unescaped := unescapeLines(unzipped)
-
-			fmt.Println(unescaped)
+			if strings.Contains(unescaped, "invalid character") {
+				unescaped = string(unzipped)
+			}
+			// fmt.Println(unescaped)
 			mimeType := mime.TypeByExtension(filepath.Ext(file.Name))
 			if mimeType == "" {
 				mimeType = "application/octet-stream"

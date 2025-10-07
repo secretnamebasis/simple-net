@@ -1,12 +1,14 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
@@ -40,6 +42,10 @@ func main() {
 			fmt.Println(host, endroute)
 			// validate scid
 			sc := getSC(host)
+			if sc.Code == "" {
+				dialog.ShowError(errors.New("code is empty"), w)
+				return
+			}
 			// gather data
 			data := getData(sc.VariableStringKeys, host)
 			fmt.Println(data)
