@@ -35,6 +35,7 @@ func serve(
 		Content     []byte
 		ContentType string
 	},
+	endroute string,
 ) {
 	files = f
 	initialPort := port
@@ -53,7 +54,7 @@ func serve(
 	go func() {
 		time.Sleep(200 * time.Millisecond)
 		fmt.Println("Server listening on port " + port)
-		var url = "http://localhost:" + port
+		var url = "http://localhost:" + port + endroute
 		if err := func(url string) error {
 			var cmd *exec.Cmd
 			switch runtime.GOOS {

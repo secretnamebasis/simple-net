@@ -52,7 +52,7 @@ func main() {
 			// construct files
 			files := getDapp(sc)
 			// serve content
-			serve(files)
+			serve(files, endroute)
 		}()
 
 		// fun(files)
