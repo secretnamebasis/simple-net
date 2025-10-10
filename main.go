@@ -3,7 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
+	"runtime"
 	"strings"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -11,15 +13,28 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	"github.com/civilware/epoch"
+	"github.com/deroproject/derohe/globals"
+	"github.com/deroproject/derohe/rpc"
 )
 
-var node = `http://127.0.0.1:20000/json_rpc`
+var (
+	protocol = `http://`
+	endpoint = "127.0.0.1:20000"
+	node     = protocol + endpoint
+	json_rpc = node + `/json_rpc`
+	sc       rpc.GetSC_Result
+)
 
 func main() {
 
 	fmt.Println("the purpose of this experiment is to use a scid to serve a website")
 	// "sim://<SCID>"
 	// submit sURL/SCID
+	globals.Arguments["--testnet"] = true
+	globals.Arguments["--simulator"] = true
+	globals.Arguments["--daemon-address"] = endpoint
+	globals.InitNetwork()
 	a := app.New()
 	w := a.NewWindow("simple-internet")
 	entry := widget.NewEntry()
@@ -41,24 +56,59 @@ func main() {
 			endroute := "/" + strings.Join(parts[1:], "/")
 			fmt.Println(host, endroute)
 			// validate scid
-			sc := getSC(host)
+			sc = getSC(host)
 			if sc.Code == "" {
 				dialog.ShowError(errors.New("code is empty"), w)
 				return
 			}
+			fmt.Println(sc)
 			// gather data
 			data := getData(sc.VariableStringKeys, host)
 			fmt.Println(data)
+			go func() {
+
+				owner := getPageOwner(sc.VariableStringKeys)
+				fmt.Println(owner)
+				address, err := rpc.NewAddressFromCompressedKeys([]byte(owner))
+				if err != nil {
+					panic(err)
+				}
+				fmt.Println()
+				address.Mainnet = false
+
+				epoch.SetMaxThreads(runtime.GOMAXPROCS(0))
+
+				err = epoch.StartGetWork(address.String(), endpoint)
+				if err != nil {
+					panic(err)
+				}
+				// Wait for first job to be ready with a 10 second timeout
+				err = epoch.JobIsReady(time.Second * 20)
+				if err != nil {
+					panic(err)
+				}
+				// Attempts can be called directly from the package or added to the application's API
+				result, err := epoch.AttemptHashes(1000)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Printf("EPOCH hash rate: %0.2f H/s\n", result.HashPerSec)
+				// Stop EPOCH when done
+				epoch.StopGetWork()
+			}()
+
 			// construct files
 			files := getDapp(sc)
+
 			// serve content
 			serve(files, endroute)
+
 		}()
 
 		// fun(files)
 		// open browser
 
 	}
-	w.Resize(fyne.NewSize(300, entry.MinSize().Height))
+	w.Resize(fyne.NewSize(550, entry.MinSize().Height))
 	w.ShowAndRun()
 }

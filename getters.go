@@ -99,7 +99,7 @@ func getRandAddr() string {
 		return ""
 	}
 
-	resp, err := http.Post(node, "application/json", bytes.NewReader(jsonBytes))
+	resp, err := http.Post(json_rpc, "application/json", bytes.NewReader(jsonBytes))
 	if err != nil {
 		fmt.Println("Failed to post:", err)
 		return ""
@@ -116,16 +116,27 @@ func getRandAddr() string {
 	r := result["result"]
 	return r.(map[string]any)["address"].([]any)[0].(string)
 }
-func getOwner(index map[string]any, owners map[uint64]any, scid string) string {
+func getIndexOwner(index map[string]any, owners map[uint64]any, scid string) string {
 	i, ok := index[scid]
 	if !ok {
 		return ""
 	}
 	return owners[uint64(i.(float64))].(string)
 }
+func getPageOwner(index map[string]any) string {
+	i, ok := index["owner"]
+	if !ok {
+		return ""
+	}
+	decoded, err := hex.DecodeString(i.(string))
+	if err != nil {
+		return ""
+	}
+	return string(decoded)
+}
 func getSC(scid string) rpc.GetSC_Result {
 
-	resp, err := http.Post(node, "application/json", bytes.NewBufferString(`
+	resp, err := http.Post(json_rpc, "application/json", bytes.NewBufferString(`
 	{
 		"jsonrpc": "2.0",
 		"id": "GET SC",

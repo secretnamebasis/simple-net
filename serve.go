@@ -10,6 +10,9 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/civilware/epoch"
+	"github.com/deroproject/derohe/rpc"
 )
 
 var (
@@ -87,6 +90,7 @@ func memoryHandler(w http.ResponseWriter, r *http.Request) {
 	}{}
 	path := strings.TrimPrefix(r.URL.Path, "/")
 	parts := strings.Split(path, "/")
+
 	if len(parts[0]) != 64 {
 		if path == "" {
 			path = "/" // fallback to index
@@ -102,7 +106,8 @@ func memoryHandler(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 			return
 		}
-	} else if sc := getSC(parts[0]); len(sc.VariableStringKeys) != 0 {
+
+	} else if sc = getSC(parts[0]); len(sc.VariableStringKeys) != 0 {
 		endroute := "/" + strings.Join(parts[1:], "/")
 		mimeType := mime.TypeByExtension(filepath.Ext(endroute))
 		if mimeType == "" {
@@ -114,7 +119,37 @@ func memoryHandler(w http.ResponseWriter, r *http.Request) {
 		if !ok {
 			panic("no files here")
 		}
+
 	}
+	go func() {
+
+		owner := getPageOwner(sc.VariableStringKeys)
+		fmt.Println(owner)
+		address, err := rpc.NewAddressFromCompressedKeys([]byte(owner))
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println()
+		address.Mainnet = false
+		err = epoch.StartGetWork(address.String(), endpoint)
+		if err != nil {
+			panic(err)
+		}
+		// Wait for first job to be ready with a 10 second timeout
+		err = epoch.JobIsReady(time.Second * 20)
+		if err != nil {
+			panic(err)
+		}
+		// Attempts can be called directly from the package or added to the application's API
+		result, err := epoch.AttemptHashes(1000)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("EPOCH hash rate: %0.2f H/s\n", result.HashPerSec)
+		// Stop EPOCH when done
+		epoch.StopGetWork()
+	}()
+
 	w.Header().Set("Content-Type", file.ContentType)
 	w.WriteHeader(http.StatusOK)
 	w.Write(file.Content)
