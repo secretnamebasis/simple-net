@@ -57,45 +57,87 @@ func main() {
 			fmt.Println(host, endroute)
 			// validate scid
 			sc = getSC(host)
+
+			redirects := 0
+			max := 100
+		redirect:
+
 			if sc.Code == "" {
 				dialog.ShowError(errors.New("code is empty"), w)
 				return
 			}
 			fmt.Println(sc)
 			// gather data
-			data := getData(sc.VariableStringKeys, host)
-			fmt.Println(data)
-			go func() {
+			keys := sc.VariableStringKeys
+			// fmt.Println(keys)
+			a_id, ok := keys["account"].(string)
+			if !ok {
+				panic("no account id")
+			}
+			if a_id == "" {
+				panic("account id cannot be empty")
+			}
+			// fmt.Println(a_id)
+			b, err := hex.DecodeString(a_id)
+			if err != nil {
+				panic(err)
+			}
+			account_id := string(b)
+			account := getSC(account_id)
+			// fmt.Println(sc)
+			d := getData(account.VariableStringKeys, host)
+			fmt.Println(d)
+			var data map[string]any
+			if err := json.Unmarshal([]byte(d), &data); err != nil {
+				panic(err)
+			}
+			status := data["Status"].(float64)
+			fmt.Println(status)
+			switch status {
+			case http.StatusOK:
+			case http.StatusTemporaryRedirect:
+				redirects++
+				sc = getSC(data["Redirect"].(string))
+				if max <= redirects {
+					dialog.ShowError(errors.New("max number of redirects"), w)
+					return
+				}
+				goto redirect
+			case http.StatusNoContent:
+				fallthrough
+			default:
+				dialog.ShowError(errors.New("site is not listed"), w)
+				return
+			}
 
-				owner := getPageOwner(sc.VariableStringKeys)
-				fmt.Println(owner)
-				address, err := rpc.NewAddressFromCompressedKeys([]byte(owner))
-				if err != nil {
-					panic(err)
-				}
-				fmt.Println()
-				address.Mainnet = false
+			owner := getPageOwner(account.VariableStringKeys)
+			fmt.Println(owner)
+			address, err := rpc.NewAddressFromCompressedKeys([]byte(owner))
+			if err != nil {
+				panic(err)
+			}
+			fmt.Println()
+			address.Mainnet = false
 
-				epoch.SetMaxThreads(runtime.GOMAXPROCS(0))
+			epoch.SetMaxThreads(runtime.GOMAXPROCS(0))
 
-				err = epoch.StartGetWork(address.String(), endpoint)
-				if err != nil {
-					panic(err)
-				}
-				// Wait for first job to be ready with a 10 second timeout
-				err = epoch.JobIsReady(time.Second * 20)
-				if err != nil {
-					panic(err)
-				}
-				// Attempts can be called directly from the package or added to the application's API
-				result, err := epoch.AttemptHashes(1000)
-				if err != nil {
-					panic(err)
-				}
-				fmt.Printf("EPOCH hash rate: %0.2f H/s\n", result.HashPerSec)
-				// Stop EPOCH when done
-				epoch.StopGetWork()
-			}()
+			err = epoch.StartGetWork(address.String(), endpoint)
+			if err != nil {
+				panic(err)
+			}
+			// Wait for first job to be ready with a 10 second timeout
+			err = epoch.JobIsReady(time.Second * 20)
+			if err != nil {
+				panic(err)
+			}
+			// Attempts can be called directly from the package or added to the application's API
+			result, err := epoch.AttemptHashes(1000)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("EPOCH hash rate: %0.2f H/s\n", result.HashPerSec)
+			// Stop EPOCH when done
+			epoch.StopGetWork()
 
 			// construct files
 			files := getDapp(sc)
@@ -104,11 +146,10 @@ func main() {
 			serve(files, endroute)
 
 		}()
-
-		// fun(files)
-		// open browser
-
 	}
+	// fun(files)
+	// open browser
+
 	w.Resize(fyne.NewSize(550, entry.MinSize().Height))
 	w.ShowAndRun()
 }
