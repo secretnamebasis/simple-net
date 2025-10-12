@@ -16,7 +16,7 @@ import (
 
 func getFiles(keys map[string]any) (files []file) {
 	for k, v := range keys {
-		if k == "C" || k == "owner" || k == "." || k == "total" {
+		if k == "C" || k == "owner" || k == "." || k == "total" || k == "account" || k == "bucket" {
 			// skip C value, owner, init & total value
 			continue
 		}
