@@ -69,7 +69,7 @@ func main() {
 				dialog.ShowError(errors.New("code is empty"), w)
 				return
 			}
-			fmt.Println(sc)
+			// fmt.Println(sc)
 			// gather data
 			keys := sc.VariableStringKeys
 			// fmt.Println(keys)
@@ -89,13 +89,11 @@ func main() {
 			account := getSC(account_id)
 			// fmt.Println(sc)
 			d := getData(account.VariableStringKeys, host)
-			fmt.Println(d)
 			var data map[string]any
 			if err := json.Unmarshal([]byte(d), &data); err != nil {
 				panic(err)
 			}
 			status := data["Status"].(float64)
-			fmt.Println(status)
 			switch status {
 			case http.StatusOK:
 			case http.StatusTemporaryRedirect:
