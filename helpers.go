@@ -11,6 +11,8 @@ import (
 	"mime"
 	"path/filepath"
 	"strings"
+
+	"github.com/deroproject/derohe/rpc"
 )
 
 func unescapeLines(b []byte) string {
@@ -91,45 +93,70 @@ func decompressData(b []byte) *gzip.Reader {
 	defer gz.Close()
 	return gz
 }
-
-func decompressFiles(contract index, chunks []chunkedCode, files map[string]struct {
+func decompressFiles(contract index, sc rpc.GetSC_Result, chunks []chunkedCode, files map[string]struct {
 	Content     []byte
 	ContentType string
 }) map[string]struct {
 	Content     []byte
 	ContentType string
 } {
+
 	start := uint64(0)
-	for i, file := range contract.Files {
-		end := file.EOF
-		name := file.Name
-		// fmt.Println(chunks)
-		switch i {
-		default:
-			b := decodeChunks(chunks[start:end])
-			start = end
-			// fmt.Println(string(b))
-			unzipped := unzipLines(b)
-			unescaped := unescapeLines(unzipped)
-			if strings.Contains(unescaped, "invalid character") {
-				unescaped = string(unzipped)
+
+	for i, f := range contract.Files {
+		end := f.EOF
+		name := f.Name
+		var b []byte
+
+		for _, each := range chunks {
+
+			if each.Line < start || each.Line >= end || each.Content == "" {
+				continue
+			} else {
+				fmt.Println(f.Name, each)
+				d, err := base64.StdEncoding.DecodeString(each.Content)
+				if err != nil {
+					continue
+				}
+				// fmt.Println(string(b))
+				b = append(b, d...)
 			}
-			// fmt.Println(unescaped)
-			mimeType := mime.TypeByExtension(filepath.Ext(file.Name))
-			if mimeType == "" {
-				mimeType = "application/octet-stream"
-			}
-			file.Lines = strings.Split(unescaped, "\n")
-			files[name] = struct {
-				Content     []byte
-				ContentType string
-			}{
-				Content:     []byte(unescaped),
-				ContentType: mimeType,
-			}
-			fmt.Println(string(files[name].ContentType))
 		}
 
+		if b == nil {
+			continue
+		}
+
+		start = end
+		// fmt.Println(string(b))
+		unzipped := unzipLines(b)
+		content := unzipped
+		if !strings.Contains(filepath.Ext(name), ".png") {
+			// fmt.Println(unzipped)
+			e := unescapeLines(unzipped)
+			content = []byte(e)
+		}
+
+		fmt.Println(string(content))
+		contract.Files[i].Lines = strings.Split(string(content), "\n")
+
+		mimeType := mime.TypeByExtension(filepath.Ext(name))
+		if mimeType == "" {
+			mimeType = "application/octet-stream"
+		}
+
+		files[name] = struct {
+			Content     []byte
+			ContentType string
+		}{
+			Content:     content,
+			ContentType: mimeType,
+		}
+		// fmt.Println(string(files[name].ContentType))
+		if len(f.Lines) == 0 {
+			contract.Files[i] = file{}
+		}
 	}
+
 	return files
 }

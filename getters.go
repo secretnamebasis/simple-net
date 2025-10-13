@@ -58,7 +58,7 @@ func getDapp(sc rpc.GetSC_Result) (files map[string]struct {
 
 	chunks := getChunks(sc.VariableUint64Keys)
 	// fmt.Println(chunks)
-	files = decompressFiles(contract, chunks, make(map[string]struct {
+	files = decompressFiles(contract, sc, chunks, make(map[string]struct {
 		Content     []byte
 		ContentType string
 	}))
