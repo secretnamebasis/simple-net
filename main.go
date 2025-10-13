@@ -6,9 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"runtime"
 	"strings"
-	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -16,7 +14,6 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
-	"github.com/civilware/epoch"
 	"github.com/deroproject/derohe/globals"
 	"github.com/deroproject/derohe/rpc"
 )
@@ -120,25 +117,25 @@ func main() {
 			fmt.Println()
 			address.Mainnet = false
 
-			epoch.SetMaxThreads(runtime.GOMAXPROCS(0))
+			// epoch.SetMaxThreads(runtime.GOMAXPROCS(0))
 
-			err = epoch.StartGetWork(address.String(), endpoint)
-			if err != nil {
-				panic(err)
-			}
-			// Wait for first job to be ready with a 10 second timeout
-			err = epoch.JobIsReady(time.Second * 20)
-			if err != nil {
-				panic(err)
-			}
-			// Attempts can be called directly from the package or added to the application's API
-			result, err := epoch.AttemptHashes(1000)
-			if err != nil {
-				panic(err)
-			}
-			fmt.Printf("EPOCH hash rate: %0.2f H/s\n", result.HashPerSec)
-			// Stop EPOCH when done
-			epoch.StopGetWork()
+			// err = epoch.StartGetWork(address.String(), endpoint)
+			// if err != nil {
+			// 	panic(err)
+			// }
+			// // Wait for first job to be ready with a 10 second timeout
+			// err = epoch.JobIsReady(time.Second * 20)
+			// if err != nil {
+			// 	panic(err)
+			// }
+			// // Attempts can be called directly from the package or added to the application's API
+			// result, err := epoch.AttemptHashes(1000)
+			// if err != nil {
+			// 	panic(err)
+			// }
+			// fmt.Printf("EPOCH hash rate: %0.2f H/s\n", result.HashPerSec)
+			// // Stop EPOCH when done
+			// epoch.StopGetWork()
 
 			// construct files
 			files := getDapp(sc)
