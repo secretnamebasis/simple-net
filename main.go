@@ -31,6 +31,7 @@ var (
 )
 
 func main() {
+	defer epoch.StopGetWork()
 
 	fmt.Println("the purpose of this experiment is to use a scid to serve a website")
 	// "sim://<SCID>"
