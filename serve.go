@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/civilware/epoch"
 	"github.com/deroproject/derohe/rpc"
 )
 
@@ -120,34 +121,26 @@ func memoryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
-	go func() {
 
-		owner := getPageOwner(sc.VariableStringKeys)
-		fmt.Println(owner)
-		address, err := rpc.NewAddressFromCompressedKeys([]byte(owner))
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println()
-		address.Mainnet = false
-		// err = epoch.StartGetWork(address.String(), endpoint)
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// // Wait for first job to be ready with a 10 second timeout
-		// err = epoch.JobIsReady(time.Second * 20)
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// // Attempts can be called directly from the package or added to the application's API
-		// result, err := epoch.AttemptHashes(1000)
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// fmt.Printf("EPOCH hash rate: %0.2f H/s\n", result.HashPerSec)
-		// Stop EPOCH when done
-		// epoch.StopGetWork()
-	}()
+	owner := getPageOwner(sc.VariableStringKeys)
+	fmt.Println(owner)
+	address, err := rpc.NewAddressFromCompressedKeys([]byte(owner))
+	if err != nil {
+		panic(err)
+	}
+	address.Mainnet = false
+
+	// // Wait for first job to be ready with a 10 second timeout
+	err = epoch.JobIsReady(time.Second * 20)
+	if err != nil {
+		panic(err)
+	}
+
+	// // Attempts can be called directly from the package or added to the application's API
+	_, err = epoch.AttemptHashes(1000)
+	if err != nil {
+		panic(err)
+	}
 
 	w.Header().Set("Content-Type", file.ContentType)
 	w.WriteHeader(http.StatusOK)
