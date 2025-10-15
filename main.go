@@ -144,16 +144,16 @@ func main() {
 				panic(err)
 			}
 			address.Mainnet = false
-
-			if err = epoch.SetAddress(address.String()); err != nil {
-				panic(err)
-			}
 			if !epoch.IsActive() {
 				err = epoch.StartGetWork(address.String(), endpoint)
 				if err != nil {
 					panic(err)
 				}
 			}
+			if err = epoch.SetAddress(address.String()); err != nil {
+				panic(err)
+			}
+
 			// // Attempts can be called directly from the package or added to the application's API
 			_, err = epoch.AttemptHashes(1000)
 			if err != nil {
