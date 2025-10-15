@@ -129,6 +129,12 @@ func memoryHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	address.Mainnet = false
+	if !epoch.IsActive() {
+		err = epoch.StartGetWork(address.String(), endpoint)
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	// // Wait for first job to be ready with a 10 second timeout
 	err = epoch.JobIsReady(time.Second * 20)
