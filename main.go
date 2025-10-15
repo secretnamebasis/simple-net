@@ -136,25 +136,16 @@ func main() {
 			}
 
 			owner := getPageOwner(account.VariableStringKeys)
-			fmt.Println(owner)
 			address, err := rpc.NewAddressFromCompressedKeys([]byte(owner))
 			if err != nil {
 				panic(err)
 			}
-			fmt.Println()
 			address.Mainnet = false
 
-			// epoch.SetMaxThreads(runtime.GOMAXPROCS(0))
+			if err = epoch.SetAddress(address.String()); err != nil {
+				panic(err)
+			}
 
-			// err = epoch.StartGetWork(address.String(), endpoint)
-			// if err != nil {
-			// 	panic(err)
-			// }
-			// // Wait for first job to be ready with a 10 second timeout
-			// err = epoch.JobIsReady(time.Second * 20)
-			// if err != nil {
-			// 	panic(err)
-			// }
 			// // Attempts can be called directly from the package or added to the application's API
 			// result, err := epoch.AttemptHashes(1000)
 			// if err != nil {
