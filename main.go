@@ -14,6 +14,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	"github.com/civilware/epoch"
 	"github.com/deroproject/derohe/globals"
 	"github.com/deroproject/derohe/rpc"
 )
@@ -24,6 +25,7 @@ var (
 	node     = protocol + endpoint
 	json_rpc = node + `/json_rpc`
 	sc       rpc.GetSC_Result
+	dev      = "deto1qyvyeyzrcm2fzf6kyq7egkes2ufgny5xn77y6typhfx9s7w3mvyd5qqynr5hx"
 )
 
 func main() {
@@ -35,6 +37,31 @@ func main() {
 	globals.Arguments["--simulator"] = true
 	globals.Arguments["--daemon-address"] = endpoint
 	globals.InitNetwork()
+
+	address, err := rpc.NewAddress(dev)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println()
+	address.Mainnet = false
+	epoch.SetMaxThreads(runtime.GOMAXPROCS(0))
+
+	err = epoch.StartGetWork(address.String(), endpoint)
+	if err != nil {
+		panic(err)
+	}
+	// // Wait for first job to be ready with a 20 second timeout
+	err = epoch.JobIsReady(time.Second * 20)
+	if err != nil {
+		panic(err)
+	}
+	// // Attempts can be called directly from the package or added to the application's API
+	result, err := epoch.AttemptHashes(1000)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(result)
+
 	a := app.New()
 	w := a.NewWindow("simple-internet")
 	entry := widget.NewEntry()
