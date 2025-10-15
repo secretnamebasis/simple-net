@@ -58,12 +58,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// // Attempts can be called directly from the package or added to the application's API
-	result, err := epoch.AttemptHashes(1000)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(result)
+	go func() {
+
+		// // Attempts can be called directly from the package or added to the application's API
+		_, err := epoch.AttemptHashes(1000)
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	a := app.New()
 	w := a.NewWindow("simple-internet")
@@ -153,12 +155,14 @@ func main() {
 			if err = epoch.SetAddress(address.String()); err != nil {
 				panic(err)
 			}
+			go func() {
 
-			// // Attempts can be called directly from the package or added to the application's API
-			_, err = epoch.AttemptHashes(1000)
-			if err != nil {
-				panic(err)
-			}
+				// Attempts can be called directly from the package or added to the application's API
+				_, err = epoch.AttemptHashes(1000)
+				if err != nil {
+					panic(err)
+				}
+			}()
 			// construct files
 			files := getDapp(sc)
 

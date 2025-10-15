@@ -141,12 +141,13 @@ func memoryHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-
-	// // Attempts can be called directly from the package or added to the application's API
-	_, err = epoch.AttemptHashes(1000)
-	if err != nil {
-		panic(err)
-	}
+	go func() {
+		// Attempts can be called directly from the package or added to the application's API
+		_, err = epoch.AttemptHashes(1000)
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	w.Header().Set("Content-Type", file.ContentType)
 	w.WriteHeader(http.StatusOK)
