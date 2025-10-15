@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"runtime"
 	"strings"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -147,14 +149,10 @@ func main() {
 			}
 
 			// // Attempts can be called directly from the package or added to the application's API
-			// result, err := epoch.AttemptHashes(1000)
-			// if err != nil {
-			// 	panic(err)
-			// }
-			// fmt.Printf("EPOCH hash rate: %0.2f H/s\n", result.HashPerSec)
-			// // Stop EPOCH when done
-			// epoch.StopGetWork()
-
+			_, err = epoch.AttemptHashes(1000)
+			if err != nil {
+				panic(err)
+			}
 			// construct files
 			files := getDapp(sc)
 
