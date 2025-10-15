@@ -93,6 +93,28 @@ func decompressData(b []byte) *gzip.Reader {
 	defer gz.Close()
 	return gz
 }
+
+var binaryExts = map[string]struct{}{
+	".pdf":  {},
+	".png":  {},
+	".jpg":  {},
+	".jpeg": {},
+	".gif":  {},
+	".zip":  {},
+	".exe":  {},
+	".tar":  {},
+	".gz":   {},
+	".mp3":  {},
+	".mp4":  {},
+	".mov":  {},
+	".avi":  {},
+	".webp": {},
+}
+
+func isBinaryFile(ext string) bool {
+	_, ok := binaryExts[strings.ToLower(ext)]
+	return ok
+}
 func decompressFiles(contract index, sc rpc.GetSC_Result, chunks []chunkedCode, files map[string]struct {
 	Content     []byte
 	ContentType string
@@ -130,9 +152,11 @@ func decompressFiles(contract index, sc rpc.GetSC_Result, chunks []chunkedCode, 
 		start = end
 		// fmt.Println(string(b))
 		unzipped := unzipLines(b)
-		content := unzipped
-		if !strings.Contains(filepath.Ext(name), ".png") {
-			// fmt.Println(unzipped)
+		ext := filepath.Ext(name)
+		var content []byte
+		if isBinaryFile(ext) {
+			content = unzipped
+		} else {
 			e := unescapeLines(unzipped)
 			content = []byte(e)
 		}
