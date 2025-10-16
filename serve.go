@@ -96,9 +96,9 @@ func memoryHandler(w http.ResponseWriter, r *http.Request) {
 			path = "/" // fallback to index
 		}
 		if path == "/" {
-			path += "index.html"
+			path = "index.html"
 		} else {
-			path = r.URL.Path
+			path = strings.TrimPrefix(r.URL.Path, "/")
 		}
 		fmt.Println("Path", path)
 		file, ok = files[path]
@@ -108,7 +108,7 @@ func memoryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else if sc = getSC(parts[0]); len(sc.VariableStringKeys) != 0 {
-		endroute := "/" + strings.Join(parts[1:], "/")
+		endroute := strings.Join(parts[1:], "/")
 		mimeType := mime.TypeByExtension(filepath.Ext(endroute))
 		if mimeType == "" {
 			mimeType = "application/octet-stream"
