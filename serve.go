@@ -96,9 +96,9 @@ func memoryHandler(w http.ResponseWriter, r *http.Request) {
 			path = "/" // fallback to index
 		}
 		if path == "/" {
-			path = "index.html"
+			path += "index.html"
 		} else {
-			path = strings.TrimPrefix(r.URL.Path, "/")
+			path = "/" + path
 		}
 		fmt.Println("Path", path)
 		file, ok = files[path]
