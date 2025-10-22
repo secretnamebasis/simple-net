@@ -108,7 +108,7 @@ func memoryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else if sc = getSC(parts[0]); len(sc.VariableStringKeys) != 0 {
-		endroute := strings.Join(parts[1:], "/")
+		endroute := "/" + strings.Join(parts[1:], "/")
 		mimeType := mime.TypeByExtension(filepath.Ext(endroute))
 		if mimeType == "" {
 			mimeType = "application/octet-stream"
