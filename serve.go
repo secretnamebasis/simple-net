@@ -102,7 +102,21 @@ func memoryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Println("Path", path)
 		file, ok = files[path]
-		if !ok {
+		if !ok && path == "/index.html" {
+			file = struct {
+				Content     []byte
+				ContentType string
+			}{
+				Content: []byte(func() string {
+					content := ""
+					for name := range files {
+						content += "<a href=" + name + ">" + name + "</a>\n"
+					}
+					return content
+				}()),
+				ContentType: "text/html; charset=utf-8",
+			}
+		} else if !ok {
 			http.NotFound(w, r)
 			return
 		}
