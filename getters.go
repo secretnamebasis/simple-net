@@ -14,6 +14,27 @@ import (
 	"github.com/deroproject/derohe/rpc"
 )
 
+func getDapp(sc rpc.GetSC_Result) (files map[string]struct {
+	Content     []byte
+	ContentType string
+}) {
+	// fmt.Println("Smart Contract Code:")
+	// fmt.Println(sc.Code)
+
+	var contract index
+	fmt.Println("dAPP Index")
+	// fmt.Println(sc.VariableStringKeys)
+
+	contract.Files = getFiles(sc.VariableStringKeys)
+
+	chunks := getChunks(sc.VariableUint64Keys)
+	// fmt.Println(chunks)
+	files = decompressFiles(contract, sc, chunks, make(map[string]struct {
+		Content     []byte
+		ContentType string
+	}))
+	return
+}
 func getFiles(keys map[string]any) (files []file) {
 	for k, v := range keys {
 		if k == "C" || k == "owner" || k == "." || k == "total" || k == "account" || k == "bucket" {
@@ -43,25 +64,19 @@ func getFiles(keys map[string]any) (files []file) {
 
 	return
 }
-func getDapp(sc rpc.GetSC_Result) (files map[string]struct {
-	Content     []byte
-	ContentType string
-}) {
-	// fmt.Println("Smart Contract Code:")
-	// fmt.Println(sc.Code)
+func getChunks(keys map[uint64]any) (chunks []chunkedCode) {
+	fmt.Println("dAPP CODE")
+	for line, c := range decodeLines(keys) {
+		// fmt.Println(line, c)
+		chunks = append(chunks, chunkedCode{
+			Line:    line,
+			Content: c.(string),
+		})
+	}
+	sort.Slice(chunks, func(i, j int) bool {
+		return chunks[i].Line < chunks[j].Line
+	})
 
-	var contract index
-	fmt.Println("dAPP Index")
-	// fmt.Println(sc.VariableStringKeys)
-
-	contract.Files = getFiles(sc.VariableStringKeys)
-
-	chunks := getChunks(sc.VariableUint64Keys)
-	// fmt.Println(chunks)
-	files = decompressFiles(contract, sc, chunks, make(map[string]struct {
-		Content     []byte
-		ContentType string
-	}))
 	return
 }
 func getData(index map[string]any, scid string) string {
@@ -168,19 +183,4 @@ func getSC(scid string) rpc.GetSC_Result {
 		return rpc.GetSC_Result{}
 	}
 	return r.Result
-}
-func getChunks(keys map[uint64]any) (chunks []chunkedCode) {
-	fmt.Println("dAPP CODE")
-	for line, c := range decodeLines(keys) {
-		// fmt.Println(line, c)
-		chunks = append(chunks, chunkedCode{
-			Line:    line,
-			Content: c.(string),
-		})
-	}
-	sort.Slice(chunks, func(i, j int) bool {
-		return chunks[i].Line < chunks[j].Line
-	})
-
-	return
 }
