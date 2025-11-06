@@ -34,8 +34,7 @@ func main() {
 	defer epoch.StopGetWork()
 
 	fmt.Println("the purpose of this experiment is to use a scid to serve a website")
-	// "sim://<SCID>"
-	// submit sURL/SCID
+
 	globals.Arguments["--testnet"] = true
 	globals.Arguments["--simulator"] = true
 	globals.Arguments["--daemon-address"] = endpoint
@@ -70,6 +69,7 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("simple-internet")
 	entry := widget.NewEntry()
+	entry.ActionItem = widget.NewButton("enter", func() { entry.OnSubmitted(entry.Text) })
 	w.SetContent(container.NewAdaptiveGrid(1,
 		container.NewVBox(
 			layout.NewSpacer(),
