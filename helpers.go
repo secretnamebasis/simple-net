@@ -10,9 +10,7 @@ import (
 	"io"
 	"mime"
 	"path/filepath"
-	"strings"
-
-	"github.com/deroproject/derohe/rpc"
+	"slices"
 )
 
 func unescapeLines(b []byte) string {
@@ -94,28 +92,27 @@ func decompressData(b []byte) *gzip.Reader {
 	return gz
 }
 
-var binaryExts = map[string]struct{}{
-	".pdf":  {},
-	".png":  {},
-	".jpg":  {},
-	".jpeg": {},
-	".gif":  {},
-	".zip":  {},
-	".exe":  {},
-	".tar":  {},
-	".gz":   {},
-	".mp3":  {},
-	".mp4":  {},
-	".mov":  {},
-	".avi":  {},
-	".webp": {},
+var binaryExts = []string{
+	".pdf",
+	".png",
+	".jpg",
+	".jpeg",
+	".gif",
+	".zip",
+	".exe",
+	".tar",
+	".gz",
+	".mp3",
+	".mp4",
+	".mov",
+	".avi",
+	".webp",
 }
 
 func isBinaryFile(ext string) bool {
-	_, ok := binaryExts[strings.ToLower(ext)]
-	return ok
+	return slices.Contains(binaryExts, ext)
 }
-func decompressFiles(contract index, sc rpc.GetSC_Result, chunks []chunkedCode, files map[string]struct {
+func decompressFiles(files []file, chunks []chunkedCode, filemap map[string]struct {
 	Content     []byte
 	ContentType string
 }) map[string]struct {
@@ -125,7 +122,7 @@ func decompressFiles(contract index, sc rpc.GetSC_Result, chunks []chunkedCode, 
 
 	start := uint64(0)
 
-	for i, f := range contract.Files {
+	for _, f := range files {
 		end := f.EOF
 		name := f.Name
 		var b []byte
@@ -150,9 +147,9 @@ func decompressFiles(contract index, sc rpc.GetSC_Result, chunks []chunkedCode, 
 		}
 
 		start = end
-		// fmt.Println(string(b))
 		unzipped := unzipLines(b)
 		ext := filepath.Ext(name)
+
 		var content []byte
 		if isBinaryFile(ext) {
 			content = unzipped
@@ -161,26 +158,21 @@ func decompressFiles(contract index, sc rpc.GetSC_Result, chunks []chunkedCode, 
 			content = []byte(e)
 		}
 
-		fmt.Println(string(content))
-		contract.Files[i].Lines = strings.Split(string(content), "\n")
-
 		mimeType := mime.TypeByExtension(filepath.Ext(name))
+
 		if mimeType == "" {
 			mimeType = "application/octet-stream"
 		}
 
-		files[name] = struct {
+		filemap[name] = struct {
 			Content     []byte
 			ContentType string
 		}{
 			Content:     content,
 			ContentType: mimeType,
 		}
-		// fmt.Println(string(files[name].ContentType))
-		if len(f.Lines) == 0 {
-			contract.Files[i] = file{}
-		}
+
 	}
 
-	return files
+	return filemap
 }
