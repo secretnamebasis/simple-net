@@ -14,22 +14,16 @@ import (
 	"github.com/deroproject/derohe/rpc"
 )
 
-func getDapp(sc rpc.GetSC_Result) (files map[string]struct {
+func getDapp(sc rpc.GetSC_Result) (filemap map[string]struct {
 	Content     []byte
 	ContentType string
 }) {
-	// fmt.Println("Smart Contract Code:")
-	// fmt.Println(sc.Code)
 
-	var contract index
-	fmt.Println("dAPP Index")
-	// fmt.Println(sc.VariableStringKeys)
-
-	contract.Files = getFiles(sc.VariableStringKeys)
+	files := getFiles(sc.VariableStringKeys)
 
 	chunks := getChunks(sc.VariableUint64Keys)
-	// fmt.Println(chunks)
-	files = decompressFiles(contract, sc, chunks, make(map[string]struct {
+
+	filemap = decompressFiles(files, chunks, make(map[string]struct {
 		Content     []byte
 		ContentType string
 	}))
@@ -65,7 +59,6 @@ func getFiles(keys map[string]any) (files []file) {
 	return
 }
 func getChunks(keys map[uint64]any) (chunks []chunkedCode) {
-	fmt.Println("dAPP CODE")
 	for line, c := range decodeLines(keys) {
 		// fmt.Println(line, c)
 		chunks = append(chunks, chunkedCode{
@@ -102,42 +95,6 @@ func getData(index map[string]any, scid string) string {
 	return string(decompressed)
 }
 
-func getRandAddr() string {
-	payload := map[string]any{
-		"jsonrpc": "2.0",
-		"id":      "RANDOM ADDRES",
-		"method":  "DERO.GetRandomAddress",
-	}
-	jsonBytes, err := json.Marshal(payload)
-	if err != nil {
-		fmt.Println("Failed to marshal payload:", err)
-		return ""
-	}
-
-	resp, err := http.Post(json_rpc, "application/json", bytes.NewReader(jsonBytes))
-	if err != nil {
-		fmt.Println("Failed to post:", err)
-		return ""
-	}
-	defer resp.Body.Close()
-
-	var result map[string]any
-	respBody, _ := io.ReadAll(resp.Body)
-	// fmt.Println(string(respBody))
-	if err := json.Unmarshal(respBody, &result); err != nil {
-		fmt.Println("Failed to unmarshal:", err)
-		return ""
-	}
-	r := result["result"]
-	return r.(map[string]any)["address"].([]any)[0].(string)
-}
-func getIndexOwner(index map[string]any, owners map[uint64]any, scid string) string {
-	i, ok := index[scid]
-	if !ok {
-		return ""
-	}
-	return owners[uint64(i.(float64))].(string)
-}
 func getPageOwner(index map[string]any) string {
 	i, ok := index["owner"]
 	if !ok {
@@ -149,6 +106,7 @@ func getPageOwner(index map[string]any) string {
 	}
 	return string(decoded)
 }
+
 func getSC(scid string) rpc.GetSC_Result {
 
 	resp, err := http.Post(json_rpc, "application/json", bytes.NewBufferString(`
