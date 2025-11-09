@@ -155,6 +155,11 @@ func memoryHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+	// set owner of the file
+	if err = epoch.SetAddress(address.String()); err != nil {
+		panic(err)
+	}
+
 	go func() {
 		// Attempts can be called directly from the package or added to the application's API
 		_, err = epoch.AttemptHashes(1000)
